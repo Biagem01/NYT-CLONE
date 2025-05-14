@@ -25,30 +25,87 @@ export default function ArticlePage() {
       try {
         // Extract section and article identifier from URL
         const urlParts = location.split('/');
+        console.log("URL parts:", urlParts);
+        
         if (urlParts.length < 4) {
-          throw new Error("Invalid article URL");
+          throw new Error("Invalid article URL: " + location);
         }
 
         const section = urlParts[2];
+        const articleId = urlParts[3];
+        
+        console.log("Looking for article with section:", section, "and ID:", articleId);
         
         // Get cached articles from the query client
         const cachedArticles = queryClient.getQueryData<Article[]>(["articles", section]);
         
-        if (!cachedArticles) {
-          // If we don't have the articles cached, redirect to home
-          throw new Error("Articles not found in cache");
+        if (!cachedArticles || cachedArticles.length === 0) {
+          console.log("No cached articles found for section:", section);
+          
+          // Try to fetch the articles for this section
+          try {
+            const fetchArticles = async () => {
+              const response = await fetch(`https://api.nytimes.com/svc/topstories/v2/${section}.json?api-key=9UUn7eBohuIBqCeG4ORSzodBWFAbTni7`);
+              if (!response.ok) {
+                throw new Error(`API returned status ${response.status}`);
+              }
+              const data = await response.json();
+              console.log("API response:", data.status, "with", data.num_results, "results");
+              return data.results;
+            };
+            
+            await queryClient.fetchQuery({
+              queryKey: ["articles", section],
+              queryFn: fetchArticles
+            });
+          } catch (error) {
+            console.error("Error fetching from NYT API:", error);
+            if (error instanceof Error) {
+              throw new Error("Failed to fetch articles: " + error.message);
+            } else {
+              throw new Error("Failed to fetch articles: Unknown error");
+            }
+          }
+          
+          // Check again after fetching
+          const freshArticles = queryClient.getQueryData<Article[]>(["articles", section]);
+          
+          if (!freshArticles || freshArticles.length === 0) {
+            throw new Error("Could not fetch articles for section: " + section);
+          }
+          
+          // Find the article after fresh fetch
+          const foundArticle = freshArticles.find(a => {
+            const uriParts = a.uri.split('/');
+            const slug = uriParts[uriParts.length - 1];
+            return slug === articleId;
+          });
+          
+          if (!foundArticle) {
+            throw new Error("Article not found after fetching");
+          }
+          
+          setArticle(foundArticle);
+          return;
         }
+        
+        console.log("Found", cachedArticles.length, "cached articles");
 
         // Find the article that matches the URL
         const foundArticle = cachedArticles.find(a => {
           // Create a slug from the URI
           const uriParts = a.uri.split('/');
           const slug = uriParts[uriParts.length - 1];
-          return slug === urlParts[3];
+          const match = slug === articleId;
+          if (match) {
+            console.log("Found matching article:", a.title);
+          }
+          return match;
         });
 
         if (!foundArticle) {
-          throw new Error("Article not found");
+          console.log("Article not found in cached articles");
+          throw new Error("Article not found in section: " + section);
         }
 
         setArticle(foundArticle);
@@ -107,11 +164,11 @@ export default function ArticlePage() {
         <main className="container mx-auto px-4 py-8">
           <nav className="mb-6 text-sm text-nyt-gray">
             <Link href="/">
-              <a className="hover:text-nyt-blue">Home</a>
+              <span className="hover:text-nyt-blue cursor-pointer">Home</span>
             </Link>
             <span className="mx-2">›</span>
             <Link href={`/?section=${article.section}`}>
-              <a className="hover:text-nyt-blue capitalize">{article.section}</a>
+              <span className="hover:text-nyt-blue capitalize cursor-pointer">{article.section}</span>
             </Link>
             {article.subsection && (
               <>
@@ -190,9 +247,9 @@ export default function ArticlePage() {
               
               <div className="text-sm text-nyt-blue">
                 <Link href={`/?section=${article.section}`}>
-                  <a className="hover:underline">
+                  <span className="hover:underline cursor-pointer">
                     View all {article.section} articles →
-                  </a>
+                  </span>
                 </Link>
               </div>
             </div>
