@@ -1,11 +1,13 @@
 import { getSections } from "@/lib/api";
 import { useSection } from "@/contexts/SectionContext";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 export default function Header() {
   const { activeSection, setActiveSection } = useSection();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const sections = getSections();
+  const [, navigate] = useLocation();
   
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -14,6 +16,11 @@ export default function Header() {
   const handleSectionClick = (sectionId: string) => {
     setActiveSection(sectionId);
     setIsMobileMenuOpen(false);
+    
+    // Check if we're on an article page and navigate back to home if needed
+    if (window.location.pathname.startsWith('/article/')) {
+      navigate('/');
+    }
   };
   
   const currentDate = new Date().toLocaleDateString('en-US', { 
@@ -56,7 +63,15 @@ export default function Header() {
         
         {/* Logo */}
         <div className="flex justify-center py-3 border-t border-b border-nyt-border">
-          <a href="#" className="text-center">
+          <a 
+            href="/" 
+            className="text-center"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveSection('home');
+              navigate('/');
+            }}
+          >
             <h1 className="font-nyt font-bold text-4xl md:text-5xl tracking-tight">The New York Times</h1>
           </a>
         </div>
