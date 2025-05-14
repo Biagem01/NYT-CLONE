@@ -2,6 +2,7 @@ import { getSections } from "@/lib/api";
 import { useSection } from "@/contexts/SectionContext";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import UserMenu from "./UserMenu";
 
 export default function Header() {
   const { activeSection, setActiveSection } = useSection();
@@ -52,9 +53,9 @@ export default function Header() {
             <a href="#" className="hidden md:inline-block hover:text-nyt-blue">
               <i className="fas fa-search"></i>
             </a>
-            <a href="#" className="hidden md:inline-block hover:text-nyt-blue">
-              <i className="far fa-user"></i> Account
-            </a>
+            <div className="hidden md:block">
+              <UserMenu />
+            </div>
             <button className="bg-nyt-blue text-white px-3 py-1 rounded-sm hover:bg-blue-800 transition-colors">
               Subscribe
             </button>

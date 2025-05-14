@@ -4,13 +4,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ArticlePage from "@/pages/ArticlePage";
+import Login from "@/pages/Login";
 import { SectionProvider } from "./contexts/SectionContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/article/:section/:id" component={ArticlePage} />
+      <Route path="/login" component={Login} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -18,12 +21,14 @@ function Router() {
 
 function App() {
   return (
-    <SectionProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </SectionProvider>
+    <AuthProvider>
+      <SectionProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </SectionProvider>
+    </AuthProvider>
   );
 }
 
