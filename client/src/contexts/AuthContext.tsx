@@ -2,7 +2,8 @@ import { createContext, useState, useContext, useEffect, ReactNode } from "react
 import { 
   User,
   onAuthStateChanged, 
-  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult,
   signOut as firebaseSignOut 
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Funzione per il login con Google
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error("Errore durante l'accesso con Google:", error);
     }
@@ -50,8 +51,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Effetto per monitorare lo stato dell'autenticazione
+  // Effetto per monitorare lo stato dell'autenticazione e gestire il redirect
   useEffect(() => {
+    // Prima controlla se c'è un risultato di redirect
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          console.log("Login con Google completato con successo");
+        }
+      })
+      .catch((error) => {
+        console.error("Errore nel gestire il redirect:", error);
+      });
+
+    // Poi imposta il listener per i cambiamenti dell'autenticazione
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);

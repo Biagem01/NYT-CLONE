@@ -25,8 +25,8 @@ export default function UserMenu() {
   // Se l'utente non è autenticato, mostra il pulsante di login
   if (!currentUser) {
     return (
-      <Link href="/login">
-        <a className="text-sm hover:text-nyt-blue cursor-pointer">Accedi</a>
+      <Link href="/login" className="text-sm hover:text-nyt-blue cursor-pointer">
+        Accedi
       </Link>
     );
   }
