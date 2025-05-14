@@ -1,33 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { FcGoogle } from "react-icons/fc";
+import { auth, googleProvider } from "@/lib/firebase";
+import { signInWithRedirect } from "firebase/auth";
 
 export default function Login() {
-  const { signInWithGoogle, currentUser } = useAuth();
+  const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, navigate] = useLocation();
 
-  // Se l'utente è già autenticato, reindirizza alla home
-  if (currentUser) {
-    navigate("/");
-    return null;
-  }
+  // Verifica se l'utente è già autenticato
+  useEffect(() => {
+    if (currentUser) {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
     try {
-      await signInWithGoogle();
-      navigate("/");
+      // Utilizziamo direttamente signInWithRedirect invece del metodo nel contesto
+      // questo evita problemi con il contesto quando viene reindirizzato
+      await signInWithRedirect(auth, googleProvider);
+      // Non è necessario navigare qui poiché il redirect avverrà automaticamente
     } catch (err) {
       setError("Si è verificato un errore durante l'accesso. Riprova più tardi.");
       console.error("Login error:", err);
-    } finally {
       setLoading(false);
     }
   };
