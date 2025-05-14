@@ -1,4 +1,5 @@
 import { Article } from "@/lib/types";
+import { Link } from "wouter";
 
 interface OpinionCardProps {
   article: Article;
@@ -20,15 +21,27 @@ export default function OpinionCard({ article }: OpinionCardProps) {
   // Use a random avatar based on the article URI (to be consistent)
   const avatarIndex = article.uri.length % defaultAvatars.length;
   const avatarUrl = defaultAvatars[avatarIndex];
+  
+  // Create URL for article detail page
+  const getArticleUrl = () => {
+    // Extract the last part of the URI as the ID
+    const uriParts = article.uri.split('/');
+    const id = uriParts[uriParts.length - 1];
+    return `/article/${article.section}/${id}`;
+  };
 
   return (
-    <article className="article-card p-2">
-      <div className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden float-left mr-3 mt-1">
-        <img src={avatarUrl} alt="Columnist portrait" className="w-full h-full object-cover" />
-      </div>
-      <h3 className="font-nyt font-bold text-lg mb-1">{article.title}</h3>
-      <p className="text-sm text-nyt-gray mb-2">{article.abstract}</p>
-      <span className="text-xs text-nyt-gray block">{author}</span>
+    <article className="article-card p-2 cursor-pointer">
+      <Link href={getArticleUrl()}>
+        <div>
+          <div className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden float-left mr-3 mt-1">
+            <img src={avatarUrl} alt="Columnist portrait" className="w-full h-full object-cover" />
+          </div>
+          <h3 className="font-nyt font-bold text-lg mb-1 hover:text-nyt-blue">{article.title}</h3>
+          <p className="text-sm text-nyt-gray mb-2">{article.abstract}</p>
+          <span className="text-xs text-nyt-gray block">{author}</span>
+        </div>
+      </Link>
     </article>
   );
 }
