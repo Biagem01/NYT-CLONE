@@ -59,3 +59,27 @@ Questo progetto rappresenta un'applicazione React moderna e ben strutturata, che
 Sono stati utilizzati strumenti avanzati come Redux Toolkit per la gestione dello stato globale, React Query per il data fetching asincrono e ottimizzato, Wouter per il routing leggero e Firebase per l’autenticazione e la persistenza dei dati utente.
 
 Inoltre, il progetto fa uso sia di React Hooks nativi (useState, useEffect, useContext, ecc.) che di custom hooks per astrarre logiche complesse e mantenere il codice più pulito e riutilizzabile.
+
+Il progetto fa uso estensivo di React Hooks, sia nativi che personalizzati, per migliorare la chiarezza e la manutenibilità del codice.
+
+🔧 Hooks nativi utilizzati
+useState, useEffect → per gestire lo stato locale e le operazioni con effetti collaterali
+
+useContext → per accedere ai context globali (es. autenticazione, sezione attiva)
+
+useReducer → per la gestione strutturata dello stato complesso (es. sistema di toast)
+
+📦 Hooks avanzati con librerie esterne
+useQuery di React Query → utilizzato per il fetching asincrono, caching e aggiornamento automatico degli articoli dal New York Times API
+
+### 🛠️ Custom Hooks sviluppati
+
+| Hook                  | Descrizione                                                                                                   |
+|-----------------------|---------------------------------------------------------------------------------------------------------------|
+| `useIsMobile`         | Determina se l'utente sta utilizzando un dispositivo mobile in base alla larghezza dello schermo              |
+| `useToast`            | Gestisce un sistema di notifiche (toast) con aggiunta, aggiornamento e rimozione centralizzata dello stato    |
+| `useArticles`         | Recupera gli articoli di una specifica sezione dal New York Times tramite React Query con caching ottimizzato |
+| `useArticlesBySection`| Riorganizza e categorizza gli articoli ricevuti (es. Main, Top Stories, Opinioni) per semplificare il rendering|
+
+
+Questi hook permettono di mantenere un codice più modulare, leggibile e riutilizzabile, e sono fondamentali per mantenere la separazione delle responsabilità tra logica di business e presentazione.
