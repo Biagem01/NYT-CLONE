@@ -79,6 +79,34 @@ useQuery di React Query → utilizzato per il fetching asincrono, caching e aggi
 
 Questi hook permettono di mantenere un codice più modulare, leggibile e riutilizzabile, e sono fondamentali per mantenere la separazione delle responsabilità tra logica di business e presentazione.
 
+## 📤 Funzionalità di Condivisione Articolo
+All'interno della pagina di dettaglio di ciascun articolo è presente un sistema per condividerne il contenuto tramite le principali piattaforme social:
+
+## 🔗 Piattaforme supportate
+ Twitter
+
+ Facebook
+
+ WhatsApp
+
+ Copia link negli appunti
+
+## 🛠 Tecnologie utilizzate
+- React – Per la gestione dello stato del componente e la logica del modal di condivisione.
+
+- Clipboard API – Per copiare l’URL dell’articolo direttamente negli appunti dell’utente.
+
+- Standard Social Share URLs – Utilizzo degli URL ufficiali per condivisione diretta:
+
+https://twitter.com/intent/tweet
+
+https://www.facebook.com/sharer/sharer.php
+
+https://api.whatsapp.com/send
+
+## 💡 Come funziona
+Quando l'utente clicca sull'icona di condivisione (📤), si apre un modal con i pulsanti per condividere l'articolo corrente. Il link viene generato dinamicamente e permette all'utente di aprire direttamente l'app di destinazione con l’articolo già allegato nel messaggio.
+
 
 ## Questo progetto rappresenta un'applicazione React moderna e ben strutturata, che replica la logica e l'estetica della homepage del New York Times. È stato sviluppato con un'attenzione particolare alla modularità, alla scalabilità e all’esperienza utente.
 
