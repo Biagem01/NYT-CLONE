@@ -1,165 +1,127 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { addFavorite, removeFavorite } from "@/redux/favorites.slice";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Article } from "@/lib/types";
-import { formatTimeAgo } from "@/lib/api";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 export default function ArticlePage() {
   const [location] = useLocation();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const queryClient = useQueryClient();
+  const dispatch = useDispatch();
+  const [user] = useAuthState(auth);
 
-  // Extract article URI from URL
-  // Format is /article/section/uri-identifier
+  const favorites = useSelector((state: RootState) => state.favorites.articles);
+
+  const isFavorite = article
+    ? favorites.some((fav) => fav.uri === article.uri)
+    : false;
+
   useEffect(() => {
-    const fetchArticle = async () => {
-      setLoading(true);
-      setError(false);
-
+    const loadArticle = async () => {
       try {
-        // Extract section and article identifier from URL
-        const urlParts = location.split('/');
-        console.log("URL parts:", urlParts);
-        
-        if (urlParts.length < 4) {
-          throw new Error("Invalid article URL: " + location);
+        setLoading(true);
+        setError(false);
+
+        const parts = location.split("/");
+        const section = parts[2];
+        const slug = parts[3];
+
+        let articles = queryClient.getQueryData<Article[]>(["articles", section]);
+
+        if (!articles) {
+          const response = await fetch(
+            `https://api.nytimes.com/svc/topstories/v2/${section}.json?api-key=9UUn7eBohuIBqCeG4ORSzodBWFAbTni7`
+          );
+
+          if (!response.ok) throw new Error("Errore nella fetch");
+
+          const data = await response.json();
+          if (!data?.results || !Array.isArray(data.results)) throw new Error("Dati non validi");
+
+          articles = data.results;
+          queryClient.setQueryData(["articles", section], articles);
         }
 
-        const section = urlParts[2];
-        const articleId = urlParts[3];
-        
-        console.log("Looking for article with section:", section, "and ID:", articleId);
-        
-        // Get cached articles from the query client
-        const cachedArticles = queryClient.getQueryData<Article[]>(["articles", section]);
-        
-        if (!cachedArticles || cachedArticles.length === 0) {
-          console.log("No cached articles found for section:", section);
-          
-          // Try to fetch the articles for this section
-          try {
-            const fetchArticles = async () => {
-              const response = await fetch(`https://api.nytimes.com/svc/topstories/v2/${section}.json?api-key=9UUn7eBohuIBqCeG4ORSzodBWFAbTni7`);
-              if (!response.ok) {
-                throw new Error(`API returned status ${response.status}`);
-              }
-              const data = await response.json();
-              console.log("API response:", data.status, "with", data.num_results, "results");
-              return data.results;
-            };
-            
-            await queryClient.fetchQuery({
-              queryKey: ["articles", section],
-              queryFn: fetchArticles
-            });
-          } catch (error) {
-            console.error("Error fetching from NYT API:", error);
-            if (error instanceof Error) {
-              throw new Error("Failed to fetch articles: " + error.message);
-            } else {
-              throw new Error("Failed to fetch articles: Unknown error");
-            }
-          }
-          
-          // Check again after fetching
-          const freshArticles = queryClient.getQueryData<Article[]>(["articles", section]);
-          
-          if (!freshArticles || freshArticles.length === 0) {
-            throw new Error("Could not fetch articles for section: " + section);
-          }
-          
-          // Find the article after fresh fetch
-          const foundArticle = freshArticles.find(a => {
-            const uriParts = a.uri.split('/');
-            const slug = uriParts[uriParts.length - 1];
-            return slug === articleId;
-          });
-          
-          if (!foundArticle) {
-            throw new Error("Article not found after fetching");
-          }
-          
-          setArticle(foundArticle);
-          return;
-        }
-        
-        console.log("Found", cachedArticles.length, "cached articles");
-
-        // Find the article that matches the URL
-        const foundArticle = cachedArticles.find(a => {
-          // Create a slug from the URI
-          const uriParts = a.uri.split('/');
-          const slug = uriParts[uriParts.length - 1];
-          const match = slug === articleId;
-          if (match) {
-            console.log("Found matching article:", a.title);
-          }
-          return match;
+        const match = articles.find((a) => {
+          const uriParts = a.uri?.split("/");
+          return uriParts?.[uriParts.length - 1] === slug;
         });
 
-        if (!foundArticle) {
-          console.log("Article not found in cached articles");
-          throw new Error("Article not found in section: " + section);
-        }
-
-        setArticle(foundArticle);
+        if (!match) throw new Error("Articolo non trovato");
+        setArticle(match);
       } catch (err) {
-        console.error("Error loading article:", err);
+        console.error("Errore nel caricamento dell'articolo:", err);
         setError(true);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchArticle();
+    loadArticle();
   }, [location, queryClient]);
 
-  const handleRetry = () => {
-    // Extract section from URL
-    const urlParts = location.split('/');
-    if (urlParts.length >= 3) {
-      const section = urlParts[2];
-      queryClient.invalidateQueries({ queryKey: ["articles", section] });
+  const getMainImage = () => {
+    if (!article?.multimedia?.length) return;
+    return (
+      article.multimedia.find((m) => m.format === "superJumbo")?.url ??
+      article.multimedia.find((m) => m.width > 600)?.url ??
+      article.multimedia[0]?.url
+    );
+  };
+
+  const handleToggleFavorite = () => {
+    if (!article) return;
+
+    if (!user) {
+      alert("Devi effettuare il login per salvare articoli nei preferiti.");
+      return;
     }
-    
-    // Reload current page
+
+    isFavorite
+      ? dispatch(removeFavorite(article.uri))
+      : dispatch(addFavorite(article));
+  };
+
+  const handleShare = () => {
+    setShowShareModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowShareModal(false);
+  };
+
+  const handleCopyLink = () => {
+    if (!article) return;
+    navigator.clipboard.writeText(article.url).then(() => {
+      alert("Link copiato negli appunti!");
+    });
+  };
+
+  const handleRetry = () => {
+    const section = location.split("/")[2];
+    queryClient.invalidateQueries({ queryKey: ["articles", section] });
     window.location.reload();
   };
 
-  // Find the best image to display
-  const getMainImage = (): string | undefined => {
-    if (!article?.multimedia || article.multimedia.length === 0) {
-      return undefined;
-    }
-
-    // Prefer superJumbo format for full article page
-    const superJumbo = article.multimedia.find(m => m.format === "superJumbo");
-    if (superJumbo) return superJumbo.url;
-
-    // Fallback to any large format
-    const anyLarge = article.multimedia.find(m => 
-      m.width > 600 || m.format === "mediumThreeByTwo440"
-    );
-    if (anyLarge) return anyLarge.url;
-
-    // Last resort: use first image
-    return article.multimedia[0].url;
-  };
-
   return (
-    <div className="bg-white text-nyt-black min-h-screen">
+    <div className="bg-white text-nyt-black min-h-screen relative">
       <Header />
-      
+
       {loading && <LoadingState />}
-      
       {error && <ErrorState onRetry={handleRetry} />}
-      
+
       {!loading && !error && article && (
         <main className="container mx-auto px-4 py-8">
           <nav className="mb-6 text-sm text-nyt-gray">
@@ -168,96 +130,118 @@ export default function ArticlePage() {
             </Link>
             <span className="mx-2">›</span>
             <Link href={`/?section=${article.section}`}>
-              <span className="hover:text-nyt-blue capitalize cursor-pointer">{article.section}</span>
+              <span className="hover:text-nyt-blue capitalize cursor-pointer">
+                {article.section}
+              </span>
             </Link>
-            {article.subsection && (
-              <>
-                <span className="mx-2">›</span>
-                <span className="capitalize">{article.subsection}</span>
-              </>
-            )}
           </nav>
-          
+
           <article className="max-w-4xl mx-auto">
-            <h1 className="font-nyt font-bold text-3xl md:text-4xl lg:text-5xl mb-4">
-              {article.title}
-            </h1>
-            
-            <h2 className="text-xl md:text-2xl font-nyt font-medium text-nyt-gray mb-6">
-              {article.abstract}
-            </h2>
-            
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-nyt-border">
+            <h1 className="font-bold text-3xl md:text-4xl mb-4">{article.title}</h1>
+            <h2 className="text-xl text-nyt-gray mb-6">{article.abstract}</h2>
+
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <p className="font-medium">{article.byline.replace(/^By\s+/i, '')}</p>
+                <p className="font-medium">{article.byline.replace(/^By\s+/i, "")}</p>
                 <p className="text-sm text-nyt-gray">
-                  {new Date(article.published_date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                  {new Date(article.published_date).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
                   })}
                 </p>
               </div>
-              <div className="flex space-x-3">
-                <button className="p-2 rounded-full hover:bg-gray-100">
-                  <i className="far fa-bookmark"></i>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleToggleFavorite}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
+                  <i className={isFavorite ? "fas fa-bookmark text-blue-600" : "far fa-bookmark"}></i>
                 </button>
-                <button className="p-2 rounded-full hover:bg-gray-100">
+                <button
+                  onClick={handleShare}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
                   <i className="fas fa-share"></i>
                 </button>
               </div>
             </div>
-            
+
             {getMainImage() && (
               <div className="mb-8">
-                <img 
-                  src={getMainImage()} 
-                  alt={article.title} 
-                  className="w-full h-auto" 
-                />
+                <img src={getMainImage()} alt={article.title} className="w-full h-auto" />
                 <p className="text-sm text-nyt-gray mt-2">
-                  {article.multimedia.find(m => getMainImage() && m.url === getMainImage())?.caption || ''}
-                </p>
-                <p className="text-xs text-nyt-gray">
-                  {article.multimedia.find(m => getMainImage() && m.url === getMainImage())?.copyright || ''}
+                  {article.multimedia?.find((m) => m.url === getMainImage())?.caption}
                 </p>
               </div>
             )}
-            
+
             <div className="prose prose-lg max-w-none mb-8">
-              <p className="text-lg">{article.abstract}</p>
-              
+              <p>{article.abstract}</p>
               <p className="italic text-nyt-gray my-6">
                 This is a preview of the article. To read the full article, please visit the New York Times website:
               </p>
-              
-              <a 
-                href={article.url} 
-                target="_blank" 
+              <a
+                href={article.url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="bg-nyt-blue text-white px-6 py-3 rounded inline-block hover:bg-blue-800 transition-colors"
               >
                 Read Full Article at NYTimes.com
               </a>
             </div>
-            
-            <div className="border-t border-nyt-border pt-6 mb-12">
-              <h3 className="font-nyt font-bold text-lg mb-4">More in {article.section}:</h3>
-              
-              <div className="text-sm text-nyt-blue">
-                <Link href={`/?section=${article.section}`}>
-                  <span className="hover:underline cursor-pointer">
-                    View all {article.section} articles →
-                  </span>
-                </Link>
-              </div>
-            </div>
           </article>
         </main>
       )}
-      
+
       <Footer />
+
+      {showShareModal && article && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg">
+            <h3 className="text-xl font-semibold mb-4">Condividi questo articolo</h3>
+            <div className="flex flex-col gap-3">
+              <a
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(article.url)}&text=${encodeURIComponent(article.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-center"
+              >
+                Condividi su Twitter
+              </a>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(article.url)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 text-center"
+              >
+                Condividi su Facebook
+              </a>
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(article.title + " " + article.url)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-center"
+              >
+                Condividi su WhatsApp
+              </a>
+              <button
+                onClick={handleCopyLink}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+              >
+                Copia link
+              </button>
+              <button
+                onClick={handleCloseModal}
+                className="mt-2 text-sm text-gray-500 hover:underline self-center"
+              >
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

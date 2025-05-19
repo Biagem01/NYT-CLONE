@@ -1,4 +1,15 @@
+import { useSection } from "@/contexts/SectionContext";
+import { useLocation } from "wouter";
+
 export default function Footer() {
+  const { setActiveSection } = useSection();
+  const [, navigate] = useLocation();
+
+  const handleSectionClick = (sectionId: string) => {
+    setActiveSection(sectionId);
+    navigate("/");
+  };
+
   return (
     <footer className="bg-nyt-light-gray border-t border-nyt-border py-8 px-4 mt-8 no-print">
       <div className="container mx-auto">
@@ -6,17 +17,17 @@ export default function Footer() {
           <div>
             <h3 className="font-nyt font-bold text-base uppercase mb-4">News</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-nyt-blue">Home Page</a></li>
-              <li><a href="#" className="hover:text-nyt-blue">World</a></li>
-              <li><a href="#" className="hover:text-nyt-blue">U.S.</a></li>
-              <li><a href="#" className="hover:text-nyt-blue">Politics</a></li>
+              <li><button className="hover:text-nyt-blue" onClick={() => handleSectionClick("home")}>Home Page</button></li>
+              <li><button className="hover:text-nyt-blue" onClick={() => handleSectionClick("world")}>World</button></li>
+              <li><button className="hover:text-nyt-blue" onClick={() => handleSectionClick("us")}>U.S.</button></li>
+              <li><button className="hover:text-nyt-blue" onClick={() => handleSectionClick("politics")}>Politics</button></li>
               <li><a href="#" className="hover:text-nyt-blue">New York</a></li>
-              <li><a href="#" className="hover:text-nyt-blue">Business</a></li>
+              <li><button className="hover:text-nyt-blue" onClick={() => handleSectionClick("business")}>Business</button></li>
               <li><a href="#" className="hover:text-nyt-blue">Tech</a></li>
-              <li><a href="#" className="hover:text-nyt-blue">Science</a></li>
+              <li><button className="hover:text-nyt-blue" onClick={() => handleSectionClick("science")}>Science</button></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="font-nyt font-bold text-base uppercase mb-4">Opinion</h3>
             <ul className="space-y-2 text-sm">
@@ -29,13 +40,13 @@ export default function Footer() {
               <li><a href="#" className="hover:text-nyt-blue">Video: Opinion</a></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="font-nyt font-bold text-base uppercase mb-4">Arts</h3>
             <ul className="space-y-2 text-sm">
               <li><a href="#" className="hover:text-nyt-blue">Today's Arts</a></li>
               <li><a href="#" className="hover:text-nyt-blue">Art & Design</a></li>
-              <li><a href="#" className="hover:text-nyt-blue">Books</a></li>
+              <li><button className="hover:text-nyt-blue" onClick={() => handleSectionClick("books")}>Books</button></li>
               <li><a href="#" className="hover:text-nyt-blue">Dance</a></li>
               <li><a href="#" className="hover:text-nyt-blue">Movies</a></li>
               <li><a href="#" className="hover:text-nyt-blue">Music</a></li>
@@ -43,7 +54,7 @@ export default function Footer() {
               <li><a href="#" className="hover:text-nyt-blue">Theater</a></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="font-nyt font-bold text-base uppercase mb-4">Living</h3>
             <ul className="space-y-2 text-sm">
@@ -57,7 +68,7 @@ export default function Footer() {
               <li><a href="#" className="hover:text-nyt-blue">Real Estate</a></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="font-nyt font-bold text-base uppercase mb-4">More</h3>
             <ul className="space-y-2 text-sm">
@@ -71,7 +82,7 @@ export default function Footer() {
               <li><a href="#" className="hover:text-nyt-blue">Tools & Services</a></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="font-nyt font-bold text-base uppercase mb-4">Subscribe</h3>
             <ul className="space-y-2 text-sm">
@@ -86,7 +97,7 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        
+
         <div className="border-t border-nyt-border pt-6 text-sm text-nyt-gray">
           <div className="flex flex-wrap justify-between mb-4">
             <div className="space-x-4 mb-4 md:mb-0">

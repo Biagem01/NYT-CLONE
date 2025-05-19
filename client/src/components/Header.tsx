@@ -6,29 +6,22 @@ import UserMenu from "./UserMenu";
 
 export default function Header() {
   const { activeSection, setActiveSection } = useSection();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const sections = getSections();
   const [, navigate] = useLocation();
-  
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-  
+
   const handleSectionClick = (sectionId: string) => {
     setActiveSection(sectionId);
-    setIsMobileMenuOpen(false);
-    
-    // Check if we're on an article page and navigate back to home if needed
-    if (window.location.pathname.startsWith('/article/')) {
-      navigate('/');
+    if (window.location.pathname !== "/") {
+      navigate("/");
     }
   };
-  
-  const currentDate = new Date().toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   return (
@@ -36,77 +29,65 @@ export default function Header() {
       <div className="container mx-auto px-4">
         {/* Top Navigation */}
         <div className="flex items-center justify-between py-2 text-sm">
-          <div className="flex items-center space-x-4">
-            <button 
-              className="md:hidden focus:outline-none" 
-              onClick={toggleMobileMenu}
-            >
-              <i className="fas fa-bars"></i>
-            </button>
-            <span className="hidden md:inline-block">
-              <i className="far fa-calendar-alt mr-1"></i>
-              <span>{currentDate}</span>
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1">
+              <i className="far fa-calendar-alt" />
+              {currentDate}
             </span>
-            <a href="#" className="hidden md:inline-block hover:text-nyt-blue">Today's Paper</a>
-          </div>
-          <div className="flex items-center space-x-4">
-            <a href="#" className="hidden md:inline-block hover:text-nyt-blue">
-              <i className="fas fa-search"></i>
+
+            <a href="#" className="hover:text-nyt-blue">
+              Today's Paper
             </a>
-            <div className="hidden md:block">
-              <UserMenu />
-            </div>
-            <button className="bg-nyt-blue text-white px-3 py-1 rounded-sm hover:bg-blue-800 transition-colors">
-              Subscribe
-            </button>
+          </div>
+
+          {/* Accedi sempre visibile */}
+          <div className="block">
+            <UserMenu />
           </div>
         </div>
-        
+
         {/* Logo */}
-        <div className="flex justify-center py-3 border-t border-b border-nyt-border">
-          <a 
-            href="/" 
-            className="text-center"
+        <div className="flex justify-center py-3 border-y border-nyt-border">
+          <a
+            href="/"
             onClick={(e) => {
               e.preventDefault();
-              setActiveSection('home');
-              navigate('/');
+              setActiveSection("home");
+              navigate("/");
             }}
           >
-            <h1 className="font-nyt font-bold text-4xl md:text-5xl tracking-tight">The New York Times</h1>
+            <h1 className="font-nyt font-bold text-4xl md:text-5xl tracking-tight text-center">
+              The New York Times
+            </h1>
           </a>
         </div>
-        
-        {/* Main Navigation */}
-        <nav className={`py-2 overflow-x-auto whitespace-nowrap text-sm hide-scrollbar ${isMobileMenuOpen ? 'block' : ''}`}>
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-5 md:space-x-8">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  className={`font-medium hover:text-nyt-blue ${
-                    activeSection === section.id ? 'text-nyt-blue' : ''
-                  } ${
-                    (section.id !== 'home' && 
-                     section.id !== 'us' && 
-                     section.id !== 'politics' && 
-                     section.id !== 'business' && 
-                     section.id !== 'science' && 
-                     section.id !== 'sports' && 
-                     section.id !== 'books') 
-                    ? 'hidden md:inline-block' : ''
-                  }`}
-                  onClick={() => handleSectionClick(section.id)}
-                >
-                  {section.name}
-                </button>
-              ))}
-            </div>
-            <div className="hidden md:block">
-              <a href="#" className="ml-4 font-medium hover:text-nyt-blue">
-                <i className="fas fa-search"></i>
-              </a>
-            </div>
+
+        {/* Navigation Menu sempre visibile + scrollabile su mobile */}
+        <nav className="py-2 block">
+          <div className="flex gap-4 items-center text-sm whitespace-nowrap overflow-x-auto hide-scrollbar">
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                className={`font-medium hover:text-nyt-blue ${
+                  activeSection === section.id ? "text-nyt-blue" : ""
+                }`}
+                onClick={() => handleSectionClick(section.id)}
+              >
+                {section.name}
+              </button>
+            ))}
+
+            <button
+              className={`font-medium hover:text-nyt-blue ${
+                activeSection === "favorites" ? "text-nyt-blue" : ""
+              }`}
+              onClick={() => {
+                setActiveSection("favorites");
+                navigate("/favorites");
+              }}
+            >
+              Favorites
+            </button>
           </div>
         </nav>
       </div>
