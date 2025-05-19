@@ -52,3 +52,10 @@ Utilizzata per ottenere gli articoli aggiornati per sezione o parola chiave.
 Documentazione ufficiale: https://developer.nytimes.com/
 
 ## Il sito è completamente responsive e ottimizzato per dispositivi mobili, tablet e desktop.
+
+
+Questo progetto rappresenta un'applicazione React moderna e ben strutturata, che replica la logica e l'estetica della homepage del New York Times. È stato sviluppato con un'attenzione particolare alla modularità, alla scalabilità e all’esperienza utente.
+
+Sono stati utilizzati strumenti avanzati come Redux Toolkit per la gestione dello stato globale, React Query per il data fetching asincrono e ottimizzato, Wouter per il routing leggero e Firebase per l’autenticazione e la persistenza dei dati utente.
+
+Inoltre, il progetto fa uso sia di React Hooks nativi (useState, useEffect, useContext, ecc.) che di custom hooks per astrarre logiche complesse e mantenere il codice più pulito e riutilizzabile.
