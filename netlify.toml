@@ -1,0 +1,7 @@
+[build]
+  base = "client"
+  publish = "../dist/public"
+  command = "npm run build"
+
+[dev]
+  framework = "vite"
