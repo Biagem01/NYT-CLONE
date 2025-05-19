@@ -4,7 +4,7 @@ Un clone moderno e responsive della homepage del **New York Times**, realizzato 
 
 ## 🚀 Demo
 
-> Puoi vedere la demo live del progetto [QUI](https://tuo-link-demo.com) _(sostituisci con il link vero se pubblicato)_.
+> Puoi vedere la demo live del progetto [QUI](newyorkclone.netlify.app) _(sostituisci con il link vero se pubblicato)_.
 
 ---
 
