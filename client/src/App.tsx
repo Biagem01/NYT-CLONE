@@ -1,31 +1,43 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { useDispatch } from "react-redux";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
+
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
-import Home from "@/pages/Home";
-import ArticlePage from "@/pages/ArticlePage";
-import Login from "@/pages/Login";
-import Favorites from "@/pages/Favorites";
 import { SectionProvider } from "./contexts/SectionContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { clearFavorites } from "@/redux/favorites.slice";
 
+// Lazy load delle pagine
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Home = lazy(() => import("@/pages/Home"));
+const ArticlePage = lazy(() => import("@/pages/ArticlePage"));
+const Login = lazy(() => import("@/pages/Login"));
+const Favorites = lazy(() => import("@/pages/Favorites"));
 
 function Router() {
   return (
     <Switch>
+      {/* Route per articoli */}
       <Route path="/article/:section/:id" component={ArticlePage} />
+
+      {/* Login e preferiti */}
       <Route path="/login" component={Login} />
       <Route path="/favorites" component={Favorites} />
-      <Route path="/" component={Home} /> {/* <- spostato in fondo */}
+
+      {/* Sezione dinamica */}
+      <Route path="/:section" component={Home} />
+
+      {/* Redirect dalla root a /home */}
+      <Route path="/" component={() => <Redirect to="/home" />} />
+
+      {/* Catch-all */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// Wrapper che si attiva solo dopo che AuthProvider ha caricato lo stato
+// Wrapper dopo che AuthProvider ha caricato lo stato
 function AppInner() {
   const { currentUser } = useAuth();
   const dispatch = useDispatch();
@@ -40,7 +52,9 @@ function AppInner() {
     <SectionProvider>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <Suspense fallback={<div className="p-4 text-center">Loading...</div>}>
+          <Router />
+        </Suspense>
       </TooltipProvider>
     </SectionProvider>
   );

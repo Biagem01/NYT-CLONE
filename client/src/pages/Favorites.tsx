@@ -8,6 +8,10 @@ import { auth } from "@/lib/firebase";
 import { removeFavorite } from "@/redux/favorites.slice";
 import { removeFavoriteFromFirestore } from "@/lib/firebaseFavorites";
 import type { Article } from "@/lib/types";
+import { Helmet } from "react-helmet-async";
+
+// ✅ Verifica se il lazy loading funziona
+console.log("✅ Favorites component loaded (lazy)");
 
 export default function Favorites() {
   const [user, loading] = useAuthState(auth);
@@ -17,12 +21,17 @@ export default function Favorites() {
   const handleRemove = async (article: Article) => {
     if (!user) return;
 
-    dispatch(removeFavorite(article.uri)); // 👈 CORRETTO: passa la stringa
+    dispatch(removeFavorite(article.uri));
     await removeFavoriteFromFirestore(user.uid, article.uri);
   };
 
   return (
     <div className="bg-white min-h-screen text-nyt-black">
+      <Helmet>
+        <title>Saved Articles - The New York Times Clone</title>
+        <meta name="description" content="Your list of saved articles on The New York Times Clone." />
+      </Helmet>
+
       <Header />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Saved Articles</h1>

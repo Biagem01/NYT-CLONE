@@ -5,17 +5,10 @@ import { useLocation } from "wouter";
 import UserMenu from "./UserMenu";
 
 export default function Header() {
-  const { activeSection, setActiveSection } = useSection();
+  const { setActiveSection } = useSection(); // utile solo per fallback o stato condiviso
   const [query, setQuery] = useState("");
   const sections = getSections();
   const [, navigate] = useLocation();
-
-  const handleSectionClick = (sectionId: string) => {
-    setActiveSection(sectionId);
-    if (window.location.pathname !== "/") {
-      navigate("/");
-    }
-  };
 
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -40,7 +33,6 @@ export default function Header() {
             </a>
           </div>
 
-          {/* Accedi sempre visibile */}
           <div className="block">
             <UserMenu />
           </div>
@@ -49,11 +41,11 @@ export default function Header() {
         {/* Logo */}
         <div className="flex justify-center py-3 border-y border-nyt-border">
           <a
-            href="/"
+            href="/home"
             onClick={(e) => {
               e.preventDefault();
-              setActiveSection("home");
-              navigate("/");
+              setActiveSection("home"); // opzionale: utile per persistenza globale
+              navigate("/home");
             }}
           >
             <h1 className="font-nyt font-bold text-4xl md:text-5xl tracking-tight text-center">
@@ -62,25 +54,24 @@ export default function Header() {
           </a>
         </div>
 
-        {/* Navigation Menu sempre visibile + scrollabile su mobile */}
+        {/* Navigation Menu */}
         <nav className="py-2 block">
           <div className="flex gap-4 items-center text-sm whitespace-nowrap overflow-x-auto hide-scrollbar">
             {sections.map((section) => (
               <button
                 key={section.id}
-                className={`font-medium hover:text-nyt-blue ${
-                  activeSection === section.id ? "text-nyt-blue" : ""
-                }`}
-                onClick={() => handleSectionClick(section.id)}
+                className="font-medium hover:text-nyt-blue"
+                onClick={() => {
+                  setActiveSection(section.id); // opzionale
+                  navigate(`/${section.id}`);
+                }}
               >
                 {section.name}
               </button>
             ))}
 
             <button
-              className={`font-medium hover:text-nyt-blue ${
-                activeSection === "favorites" ? "text-nyt-blue" : ""
-              }`}
+              className="font-medium hover:text-nyt-blue"
               onClick={() => {
                 setActiveSection("favorites");
                 navigate("/favorites");

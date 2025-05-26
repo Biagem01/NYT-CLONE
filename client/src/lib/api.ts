@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NYTimesApiResponse, Article } from "./types";
 
-const API_KEY = "9UUn7eBohuIBqCeG4ORSzodBWFAbTni7";
+const API_KEY = import.meta.env.VITE_NYT_API_KEY;
 const BASE_URL = "https://api.nytimes.com/svc/topstories/v2";
 
 export const fetchArticles = async (section: string = "home"): Promise<Article[]> => {

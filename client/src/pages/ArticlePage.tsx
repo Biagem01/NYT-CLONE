@@ -11,6 +11,7 @@ import ErrorState from "@/components/ErrorState";
 import { Article } from "@/lib/types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
+import { Helmet } from "react-helmet-async";
 
 export default function ArticlePage() {
   const [location] = useLocation();
@@ -21,6 +22,7 @@ export default function ArticlePage() {
   const queryClient = useQueryClient();
   const dispatch = useDispatch();
   const [user] = useAuthState(auth);
+  const apiKey = import.meta.env.VITE_NYT_API_KEY;
 
   const favorites = useSelector((state: RootState) => state.favorites.articles);
 
@@ -42,7 +44,7 @@ export default function ArticlePage() {
 
         if (!articles) {
           const response = await fetch(
-            `https://api.nytimes.com/svc/topstories/v2/${section}.json?api-key=9UUn7eBohuIBqCeG4ORSzodBWFAbTni7`
+            `https://api.nytimes.com/svc/topstories/v2/${section}.json?api-key=${apiKey}`
           );
 
           if (!response.ok) throw new Error("Errore nella fetch");
@@ -123,76 +125,83 @@ export default function ArticlePage() {
       {error && <ErrorState onRetry={handleRetry} />}
 
       {!loading && !error && article && (
-        <main className="container mx-auto px-4 py-8">
-          <nav className="mb-6 text-sm text-nyt-gray">
-            <Link href="/">
-              <span className="hover:text-nyt-blue cursor-pointer">Home</span>
-            </Link>
-            <span className="mx-2">›</span>
-            <Link href={`/?section=${article.section}`}>
-              <span className="hover:text-nyt-blue capitalize cursor-pointer">
-                {article.section}
-              </span>
-            </Link>
-          </nav>
+        <>
+          <Helmet>
+            <title>{article.title} - The New York Times Clone</title>
+            <meta name="description" content={article.abstract} />
+          </Helmet>
 
-          <article className="max-w-4xl mx-auto">
-            <h1 className="font-bold text-3xl md:text-4xl mb-4">{article.title}</h1>
-            <h2 className="text-xl text-nyt-gray mb-6">{article.abstract}</h2>
+          <main className="container mx-auto px-4 py-8">
+            <nav className="mb-6 text-sm text-nyt-gray">
+              <Link href="/">
+                <span className="hover:text-nyt-blue cursor-pointer">Home</span>
+              </Link>
+              <span className="mx-2">›</span>
+              <Link href={`/?section=${article.section}`}>
+                <span className="hover:text-nyt-blue capitalize cursor-pointer">
+                  {article.section}
+                </span>
+              </Link>
+            </nav>
 
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <p className="font-medium">{article.byline.replace(/^By\s+/i, "")}</p>
-                <p className="text-sm text-nyt-gray">
-                  {new Date(article.published_date).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+            <article className="max-w-4xl mx-auto">
+              <h1 className="font-bold text-3xl md:text-4xl mb-4">{article.title}</h1>
+              <h2 className="text-xl text-nyt-gray mb-6">{article.abstract}</h2>
+
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <p className="font-medium">{article.byline.replace(/^By\s+/i, "")}</p>
+                  <p className="text-sm text-nyt-gray">
+                    {new Date(article.published_date).toLocaleDateString("en-US", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleToggleFavorite}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                  >
+                    <i className={isFavorite ? "fas fa-bookmark text-blue-600" : "far fa-bookmark"}></i>
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                  >
+                    <i className="fas fa-share"></i>
+                  </button>
+                </div>
+              </div>
+
+              {getMainImage() && (
+                <div className="mb-8">
+                  <img src={getMainImage()} alt={article.title} className="w-full h-auto" />
+                  <p className="text-sm text-nyt-gray mt-2">
+                    {article.multimedia?.find((m) => m.url === getMainImage())?.caption}
+                  </p>
+                </div>
+              )}
+
+              <div className="prose prose-lg max-w-none mb-8">
+                <p>{article.abstract}</p>
+                <p className="italic text-nyt-gray my-6">
+                  This is a preview of the article. To read the full article, please visit the New York Times website:
                 </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleToggleFavorite}
-                  className="p-2 rounded-full hover:bg-gray-100"
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-nyt-blue text-white px-6 py-3 rounded inline-block hover:bg-blue-800 transition-colors"
                 >
-                  <i className={isFavorite ? "fas fa-bookmark text-blue-600" : "far fa-bookmark"}></i>
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <i className="fas fa-share"></i>
-                </button>
+                  Read Full Article at NYTimes.com
+                </a>
               </div>
-            </div>
-
-            {getMainImage() && (
-              <div className="mb-8">
-                <img src={getMainImage()} alt={article.title} className="w-full h-auto" />
-                <p className="text-sm text-nyt-gray mt-2">
-                  {article.multimedia?.find((m) => m.url === getMainImage())?.caption}
-                </p>
-              </div>
-            )}
-
-            <div className="prose prose-lg max-w-none mb-8">
-              <p>{article.abstract}</p>
-              <p className="italic text-nyt-gray my-6">
-                This is a preview of the article. To read the full article, please visit the New York Times website:
-              </p>
-              <a
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-nyt-blue text-white px-6 py-3 rounded inline-block hover:bg-blue-800 transition-colors"
-              >
-                Read Full Article at NYTimes.com
-              </a>
-            </div>
-          </article>
-        </main>
+            </article>
+          </main>
+        </>
       )}
 
       <Footer />

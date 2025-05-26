@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { FcGoogle } from "react-icons/fc";
+import { Helmet } from "react-helmet-async"; // 👈 importa Helmet
 
 export default function Login() {
   const { currentUser, signInWithGoogle } = useAuth();
@@ -33,6 +34,11 @@ export default function Login() {
 
   return (
     <div className="bg-white text-nyt-black min-h-screen">
+      <Helmet> {/* 👈 Helmet per il titolo e SEO */}
+        <title>Accedi - The New York Times Clone</title>
+        <meta name="description" content="Accedi al tuo account per salvare articoli e personalizzare la tua esperienza sul clone del New York Times." />
+      </Helmet>
+
       <Header />
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto bg-white rounded-md p-8 shadow-sm border border-nyt-border">
